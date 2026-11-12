@@ -178,3 +178,25 @@ test('analyzeInvite: an invite promoted by the evidence pass still gets length-n
   assert.equal(r.classification, 'invite');
   assert.ok(r.constraints.some((c) => c.key === 'length-not-stated'));
 });
+
+test('classifyReply does not propose Interview for a vacancy closing time', () => {
+  const r = classifyReply({
+    from: 'Jane Smith <jane@example.test>',
+    subject: 'Application update',
+    received_at: '2026-11-12T09:00:00Z',
+    body_snippet: 'The vacancy closes on 20 November 2026 at 17:00. We are currently reviewing applications.',
+  });
+  assert.equal(r.type, 'Unknown');
+  assert.equal(r.suggestedTrackerUpdate, 'Needs Review');
+});
+
+test('invite evidence selects the interview time after an unrelated closing time', () => {
+  const r = inviteEvidence({
+    from: 'Jane Smith <jane@example.test>',
+    subject: 'Application update',
+    date: REF,
+    text: 'The vacancy closes on 20 November 2026 at 17:00. We would like to invite you to an interview on 24 November 2026 at 10:30.',
+  });
+  assert.equal(r.invite, true);
+  assert.equal(r.when, '2026-11-24T10:30');
+});
